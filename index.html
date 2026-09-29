@@ -4,6 +4,18 @@
         <canvas id="can"></canvas>
         <script>
 
+        //プログラムを厳格に動かすモード。現在はオフだが、バグの早期発見につながる。
+        //オンにするには先頭の「//」を消すだけ。
+        //"use strict";
+
+        /*
+            まちがいだったポイントのリスト
+            １．定数「TETRO_SIZE」が後半「TETORO_SIZE」とスペルミスを連発していた。
+            ２．変数「speed」を定義していなかった。
+            ３．変数「linec」を定義するはずがまちがって「変数lineに変数cを代入」と書いてしまった？
+            ４．
+        */
+
         //落ちるスピード
         const GAME_SPEED = 300;
 
@@ -147,6 +159,10 @@
         const OFFSET_Y = 20;
 
 
+        //仮で未定義の変数を定義しておく。 - TT
+        let speed = 0;
+
+
         //イニシャライズでスタート
         init();
 
@@ -171,7 +187,7 @@
                 setTetro();
                 drawAll();
 
-                //speed変数をまだ宣言していないため宣言する必要がある - TT
+                //多分変数speedで速度を上げる？ - TT
                 setInterval ( dropTetro, GAME_SPEED-speed  );
 
             }
@@ -197,9 +213,22 @@
                 let py = OFFSET_Y + y * BLOCK_SIZE;
 
                 //ErrP - blimageがないと動かない - TT
+                /*
+                //動かないため代替コードを書いておく。 - TT
+                //多分blimageは色ごとに横一列に並んだアセットなんじゃないかな？ - TT
+                //drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
                 con.drawImage(blimage,
                     c*BLOCK_SIZE,0,   BLOCK_SIZE,BLOCK_SIZE,
                     px,py,            BLOCK_SIZE,BLOCK_SIZE );
+                */
+                //代替コード
+                con.save();
+
+                con.fillStyle = TETRO_COLORS[c+1];
+
+                con.fillRect(px,py,BLOCK_SIZE,BLOCK_SIZE);
+                
+                con.restore();
             }
 
         //全部描画する
@@ -239,10 +268,10 @@
 
                 //テトロミノを描画
 
-                for(let y=0; y<TETORO_SIZE ; y++ )
+                for(let y=0; y<TETRO_SIZE ; y++ )
                     {  
                 
-                        for(let x=0; x<TETORO_SIZE ; x++ )
+                        for(let x=0; x<TETRO_SIZE ; x++ )
                             {
                             //テトロ本体
                             if(  tetro[y][x]   )
@@ -304,9 +333,9 @@
             {
                 if( ntetro == undefined ) ntetro = tetro;
 
-                for(let y=0; y<TETORO_SIZE ; y++ )
+                for(let y=0; y<TETRO_SIZE; y++ )
                     {
-                        for(let x=0; x<TETORO_SIZE ; x++ )
+                        for(let x=0; x<TETRO_SIZE ; x++ )
                         { 
                             let nx = tetro_x + mx + x;
                             let ny = tetro_y + my + y;
@@ -334,12 +363,12 @@
             {
                 let ntetro = [];
 
-                for(let y=0; y<TETORO_SIZE ; y++ )
+                for(let y=0; y<TETRO_SIZE ; y++ )
                     {
                         ntetro[y]=[];
-                    for(let x=0; x<TETORO_SIZE ; x++ )
+                    for(let x=0; x<TETRO_SIZE ; x++ )
                     { 
-                        ntetro[y][x]=tetro[TETORO_SIZE-x-1][y];
+                        ntetro[y][x]=tetro[TETRO_SIZE-x-1][y];
                     }
                 }
 
@@ -349,9 +378,9 @@
         //テトロを固定する
         function fixTetro()
             {
-            for(let y=0; y<TETORO_SIZE ; y++ )
+            for(let y=0; y<TETRO_SIZE ; y++ )
                 {
-                    for(let x=0; x<TETORO_SIZE ; x++ )
+                    for(let x=0; x<TETRO_SIZE ; x++ )
                         { 
                             if( tetro[y][x] )
                             {
@@ -364,15 +393,18 @@
         //ラインが揃ったかチェックして消す
         function checkLine()
             {
-                let line=c
+                //ErrP - 変数cが未定義。この変数が何を意味しているかがわからないが、多分初期化の「let linec = 0;」のミス？ - TT
+                let linec = 0;
                 for(let y=0; y<FIELD_ROW ; y++ )
                     {
                         let flag=true;
 
-                        for(let x=0; x<TETORO_SIZE ; x++ )
-                            {  
+                        for(let x=0; x<TETRO_SIZE ; x++ )
+                            {
+                                //おそらく横一列ブロックがあるかチェックしていると思われる。 - TT
                                 if( !field[y][x] )  
-                                    { 
+                                    {
+                                        //何もなければフラグを折る。 - TT
                                         flag=false 
                                         break;
                                     }
@@ -380,8 +412,10 @@
                         
                         if(flag)
                             {
+                                //多分「現在のターンで消したラインの数」を一増やしている。 - TT
                                 linec++;
 
+                                //一列ずつ上の列のデータを下へ移動させていると思われる。 - TT
                                 for(let ny = y; ny>0 ;ny-- )
                                     {
                                         for(let nx=0;nx<FIELD_COL ; nx++)
@@ -391,13 +425,18 @@
                                     }
                             }
                     }
-            
+                
+                //消したラインが一本以上の時実行。 - TT
                 if(linec)
                     {
-                        se3.pause();
-                        se3.play();
+                        //ErrP - se3.mp3が存在しないため鳴らさない。 - TT
+                        //se3.pause();
+                        //se3.play();
+                        //今消したライン数だけをカウントアップさせていると思われる。 - TT
                         lines += linec;
+                        //1 : 100, 2 : 200, 3 : 400, 4 : 800と、スコア増加量は二乗で増えていると思われる。 - TT
                         score+100* (2**(linec-1));
+                        //この処理はわからない。 - TT
                         if(speed<GAME_SPEED-10)speed+=10;
                     }
             }
@@ -417,7 +456,8 @@
                     }
                 else
                     {
-                        se1.play();
+                        //ErrP - se1.mp3が存在しないため鳴らさない。 - TT
+                        //se1.play();
                         fixTetro();
                         checkLine();
                         setTetro();
@@ -428,7 +468,7 @@
             }
 
             //キーボードが押されたときの処理
-        document.onkeydown = functon(e)
+        document.onkeydown = function(e)
             {
                 if(over)
                     {
